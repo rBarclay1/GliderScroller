@@ -1,0 +1,17 @@
+.ticTable {
+	width: 600px;
+	height: 600px;
+	border-collapse: collapse;
+	border: 2px solid black;
+	table-layout: fixed;
+}
+.ticTable td {
+	width: 100px;
+	height: 100px;
+	border: 1px solid black;
+	text-align: center;
+	vertical-align: middle;
+	word-wrap: break-word;
+	font-size: 90px;
+}
+
