@@ -27,6 +27,8 @@ const jumpPower = 50;
 const WORLD_WIDTH = 6000;
 const WORLD_HEIGHT = 1000;
 
+let collide = false;
+
 let player = {
 	x:200,
 	y:700,
@@ -42,13 +44,60 @@ function Block(x,y,w,h){
 	this.w = w;
 	this.h = h;
 }
+//                        x   y   w   h
+const Block1 = new Block(500,900,300,100);
 
-let Block1 = new Block();
+let blocks = [];
 
+blocks.push(Block1);
 
-Block1.x = 2;
+let bottomPlayer;
+let topPlayer;
+let rightPlayer;
+let leftPlayer;
 
-alert(Block1.x);
+// alert(leftPlayer);
+// alert(Block1.rB());
+
+function collision(){
+	for (let i = 0; i < blocks.length; i++){
+
+		if ((leftPlayer < (blocks[i].x + blocks[i].w) && rightPlayer > blocks[i].x) && (bottomPlayer > blocks[i].y && topPlayer < (blocks[i].y + blocks[i].h))){
+			player.vx = 0;
+			player.vy = 0;
+			speed = 0;
+		
+			// handleCollision(i);
+			//alert('nuts');
+			
+			if (bottomPlayer >= blocks[i].y){
+				
+				player.y = blocks[i].y - 20;
+				//alert('yes');
+
+				
+			}
+			//collide = true;
+		}
+		//else{collide = false;}
+		//alert('fart');
+	}
+	
+}
+
+function handleCollision(i){
+	if (keys["ArrowRight"]){
+		player.x -= speed+1;
+	}
+	if (keys["ArrowLeft"]){
+		player.x += speed+1; 
+	}
+	if (bottomPlayer > blocks[i].y -10 && topPlayer < (blocks[i].y + blocks[i].h)){
+		player.y = blocks[i].y-10;
+	}
+
+}
+
 
 let cameraX = 0;
 
@@ -90,14 +139,15 @@ document.addEventListener("keydown", e => {
     }
 });
 
-
-
-
 function update() {
+	console.log('wegood');
+	bottomPlayer = player.y + player.height;
+	topPlayer = player.y;
+	rightPlayer = player.x + player.width;
+	leftPlayer = player.x;
 	mover();
+	collision();
 }
-
-
 
 function speedGain(){
 	if (holding && speed < maxSpeed){
@@ -106,6 +156,12 @@ function speedGain(){
 	else if (!holding) speed = minSpeed;
 }
 
+function gravityFunc(){
+	if (!collide){
+		player.vy += gravity;
+	}
+
+}
 
 function mover(){
 
@@ -113,7 +169,7 @@ function mover(){
 		player.vx += speed;
 	}
 	else if (keys["ArrowLeft"]) player.vx -= speed;
-	else player.vx = 0;
+	else player.vx *= .9;
 
 	if (keys[" "] && player.y >= floorY){
 		player.vy -= jumpPower;
@@ -121,10 +177,7 @@ function mover(){
 
 	gliding = (keys["ArrowDown"]) && player.y < floorY;
 
-	
-	player.vy += gravity;
-
-	
+	gravityFunc();
 
 	if (gliding){
 		if (player.vx > 2 || player.vx < -2){
@@ -142,7 +195,7 @@ function mover(){
 	player.vy *= .9;
 	player.vx *= .9;
 
-	if (player.y >= floorY){
+	if (player.y >= floorY && !collide){
 		player.y = floorY;
 		player.vy = 0;
 	}
@@ -157,12 +210,15 @@ function draw() {
 	ctx.clearRect(0,0, canvas.width, canvas.height);
 	
 
+	ctx.fillStyle = "black";
+
+	ctx.fillRect(Block1.x - cameraX, Block1.y, Block1.w, Block1.h);
+
+
+	ctx.fillStyle = "yellow";
+	ctx.fillRect(Block1.x - cameraX, Block1.y, 10, 10);
+
 	ctx.fillStyle = "blue";
-
-	ctx.fillRect(1000- cameraX,300,200,200);
-
-	ctx.fillRect(1000- cameraX,300,200,200);
-	ctx.fillRect(500- cameraX,200,200,100);
 	ctx.fillRect(1500- cameraX,400,100,100);
 	ctx.fillRect(2000- cameraX,600,100,100);
 	ctx.fillRect(2500- cameraX,200,100,100);
