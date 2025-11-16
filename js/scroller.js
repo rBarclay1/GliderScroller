@@ -1,3 +1,13 @@
+// TO DO
+// - switch directions with glide dosent bug
+// - trail behind player maybe make it a circle
+// - more movement tech
+// - organize code get rid of stuff not doing anything
+// - make more classes 
+// - make it a visible window on screen
+// - trial level
+
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 let pressed;
@@ -64,11 +74,9 @@ blocks.push(Block3);
 
 
 document.getElementById("startBtn").addEventListener("click", () => {
-    paused = false;
-	document.getElementById("startBtn").style.display = "none";
-	player.x = spawnX;
-	player.y = spawnY;
+    restart();
 });
+
 
 //console.log(blocks);
 
@@ -102,6 +110,13 @@ function addBlock2Grid(block){
 	}
 
 	grid[key].push(block);
+}
+
+function restart(){
+	paused = false;
+	document.getElementById("startBtn").style.display = "none";
+	player.x = spawnX;
+	player.y = spawnY;
 }
 
 function checkNeigh(player){
@@ -158,6 +173,12 @@ document.addEventListener("keyup", e => {
 
 document.addEventListener("keydown", e => {
 	keys[e.key] = true
+	if (e.code === "KeyR"){
+		paused = false;
+		document.getElementById("startBtn").style.display = "none";
+		player.x = spawnX;
+		player.y = spawnY;
+	}
 	if (e.code === "ArrowDown" && !gliding) {
         gliding = true;
         t = 0;     
@@ -343,12 +364,12 @@ function wontCollideBottom(block){
 function jumper(nearby){
 	//console.log(neary);
 	for (let ner of nearby){
-		console.log((player.y + player.height) > (ner.y - 5));
+		//console.log((player.y + player.height) > (ner.y - 5));
 		if (keys[" "] && (player.y + player.height) > (ner.y - 5) && canJump && jreleased) {
 			player.vy -= jumpPower;
 			canJump = false;
 			jreleased = false;
-			console.log('what');
+			//console.log('what');
 		}
 	}
 	
@@ -373,16 +394,17 @@ function mover(nearby){
 		else (player.vx = 0);
 	}
 
-	gliding = (keys["ArrowDown"]) && (keys["ArrowLeft"] || keys["ArrowRight"]) &&player.y < floorY && (player.vx > 2 || player.vx < -2);
+	gliding = (keys["ArrowDown"]) && (keys["ArrowLeft"] || keys["ArrowRight"]) && player.y < floorY && (player.vx > 2 || player.vx < -2);
 
 	if (gliding){
 		if (player.vx > 2 || player.vx < -2){
 			t += 0.03;
-        	player.y = startY + Math.sin(t * .7) * 200 - t * 18;
+        	player.y = startY + Math.sin(t * .7) * 200 - t * (-20);
+			console.log(t);
 		}
 	}
 
-	else if(!gliding) t = 0;
+	else if(!gliding && player.vy == 0) t = 0;
 	
 
 	
