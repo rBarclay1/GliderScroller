@@ -1,15 +1,11 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 let pressed;
-let x = 100;
-let y = 300;
-let vy = 0;
-let vx = 0;
 let gliding;
 let floorY = canvas.height - 60;
 let glideTime = 0;
 
-let startY = 600;
+let startY = 100;
 
 
 const maxGlideTime = 120;
@@ -17,21 +13,29 @@ let lift = 2;
 const maxLift = 3;
 let glideFallSpeed = 1.5;
 
-const minSpeed =1;
+const minSpeed =.8;
 
-const maxSpeed = 2;
-let speed = 1;
-const gravity = 2;
+const maxSpeed = 1;
+let speed = .8;
+const gravity = 1;
 const jumpPower = 50;
 
 const WORLD_WIDTH = 6000;
 const WORLD_HEIGHT = 1000;
 
+let grid = {};
+const cellSize = 1000;
+
 let collide = false;
+
+const spawnX = 200;
+const spawnY = 200;
+
+let paused = false;
 
 let player = {
 	x:200,
-	y:700,
+	y:200,
 	width: 50,
 	height: 50,
 	vx:0,
@@ -45,11 +49,84 @@ function Block(x,y,w,h){
 	this.h = h;
 }
 //                        x   y   w   h
-const Block1 = new Block(500,700,300,200);
+const Block1 = new Block(0,700,600,200);
+
+const Block2 = new Block(1200, 700, 300, 200);
+const Block3 = new Block(1500, 800, 1000, 500)
+const Block4 = new Block()
+
 
 let blocks = [];
 
 blocks.push(Block1);
+blocks.push(Block2);
+blocks.push(Block3);
+
+
+document.getElementById("startBtn").addEventListener("click", () => {
+    paused = false;
+	document.getElementById("startBtn").style.display = "none";
+	player.x = spawnX;
+	player.y = spawnY;
+});
+
+//console.log(blocks);
+
+
+function nearbyCollision(nearby){
+	if (nearby){
+		for (let i = 0; i < nearby.length; i++){
+			//console.log(nearby[i]);
+		}
+	}
+	
+}
+
+
+function addBlocks(){
+	for (const block of blocks){
+
+		//console.log(block);
+		addBlock2Grid(block);
+	}
+}
+
+
+function addBlock2Grid(block){
+	const cellX = Math.floor(block.x / cellSize);
+	const cellY = Math.floor(block.y / cellSize) ;
+	const key = cellX + ',' + cellY;
+
+	if (!grid[key]){
+		grid[key] = []
+	}
+
+	grid[key].push(block);
+}
+
+function checkNeigh(player){
+	const cellX = Math.floor(player.x / cellSize);
+	const cellY = Math.floor(player.y / cellSize);
+
+	let nearby = [];
+
+    for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+            const key = (cellX + dx) + "," + (cellY + dy);
+
+            if (grid[key]) {
+                nearby.push(...grid[key]);
+				//console.log(grid[key]);
+            }
+        }
+    }
+	for (let i = 0; i < nearby.length; i++){
+			//console.log(nearby[i]);
+		}
+	//console.log(nearby[0]);
+	nearbyCollision(nearby);
+    return nearby;
+}
 
 
 let cameraX = 0;
@@ -74,6 +151,7 @@ document.addEventListener("keyup", e => {
 	
 	if (e.code === "ArrowRight" || e.code === "ArrowLeft"){
 		holding = false;
+		//speed = minSpeed;
 		speedGain();
 	}
 });
@@ -94,18 +172,19 @@ document.addEventListener("keydown", e => {
 });
 
 function update() {
-	console.log(player.vy);
+
+	if (paused) return;
+	//console.log(player.vy);
 	//console.log('wegood');
 	bottomPlayer = player.y + player.height;
 	topPlayer = player.y;
 	rightPlayer = player.x + player.width;
 	leftPlayer = player.x;
-	
-	mover();
-	//collision();
 
-	//console.log(player.vx + '- vx');
-	//console.log(player.x);
+	let nearby = checkNeigh(player);
+	//console.log(nearby);
+	//nearbyCollision();
+	mover(nearby);
 
 	player.x += player.vx;
 	player.y += player.vy;
@@ -117,7 +196,10 @@ function update() {
 		player.y = floorY;
 		canJump = true;
 		player.vy = 0;
+		//console.log('why');
+		paused = true;
 	}
+
 	player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH - player.width));
 
 	cameraX = player.x - canvas.width / 2;
@@ -132,121 +214,220 @@ function speedGain(){
 	else if (!holding) speed = minSpeed;
 }
 
-function gravityFunc(){
-	if (wontCollideTop()){
+function gravityFunc(nearby){
+	//console.log(collideTop(nearby));
+	if (collideTop(nearby)){
+		//console.log('ok');
 		player.vy += gravity;
 	}
 		
 }
 
-function wontCollideTop(){
-	if ((player.y + player.height) + 1 > Block1.y && 
-		(player.x + player.width) > Block1.x && 
-		player.x < (Block1.x + Block1.w) &&
-		player.y < (Block1.y + Block1.h) - 10) {
+function offMap(){
+	if (player.y > floorY){
+		player.y = spawnY;
+		player.x = spawnX;
+	}
+}
+
+function collideTop(nearby){
+	//console.log(nearby);
+	//console.log('yert');
+	if (nearby){
+		//console.log('yert');
+		for (let i = 0; i < nearby.length; i++){
+			if (!wontCollideTop(nearby[i])) {
+				//console.log('yert');
+				return false;
+			}
+		}
+		return true;
+	}
+}
+
+function wontCollideTop(block){
+	//console.log(block);
+	if ((player.y + player.height) + 5 > block.y && 
+		(player.x + player.width) > block.x && 
+		player.x < (block.x + block.w) &&
+		player.y < (block.y + block.h) - 10) {
 		canJump = true;
 		player.vy = 0;
-		player.y = Block1.y - player.height;
+		player.y = block.y - player.height;
+		//console.log('ok');
 		return false;
 	}
 	else return true;
 }
 
+function collideRight(nearby){
+	//console.log('running');
+	if (nearby){
+		for (let i = 0; i < nearby.length; i++){
+			if (!wontCollideRight(nearby[i])) {
+				//console.log('even here');
+				return false;
+			}
+			//console.log('ok');
+		}
+		return true;
+	}
 
-function wontCollideRight(){
-	if ((player.x + player.width) + 1 > Block1.x && 
-		(player.y + player.height) > Block1.y + 10 && 
-		player.x < (Block1.x + Block1.w - 10) &&
-		player.y < (Block1.y + Block1.h) - 10) {
+}
 
-		//console.log((player.y + player.height) +  '- player');
-		//console.log((Block1.h +2) +  '- block');
-		//console.log((player.y + player.height) + " - bPlayer");
-		//console.log(Block1.y + " - BlockTop");
-		//alert('yes');
+function collideLeft(nearby){
+	if (nearby){
+		for (let i = 0; i < nearby.length; i++){
+			if (!wontCollideLeft(nearby[i])) {
+				//console.log('even here');
+				return false;
+			}
+		}
+		return true;
+	}
+}
+
+function wontCollideRight(block){
+	//console.log(block.x);
+	if ((player.x + player.width) + 1 > block.x && 
+		(player.y + player.height) > block.y + 10 && 
+		player.x < (block.x + block.w - 10) &&
+		player.y < (block.y + block.h) - 10) {
+
 		player.vx = 0;
-		player.x = Block1.x - player.width;
+		player.x = block.x - player.width;
+		//console.log('false');
 		return false;
 	}
-		
-	else return true;
+	else {
+		//console.log('true;');
+		return true;
+	}
 }
 
-function wontCollideLeft(){
-	if (player.x - 1 < (Block1.x + Block1.w) && 
-		(player.y + player.height) > Block1.y + 10 && 
-		(player.x + player.width) > Block1.x + 10 &&
-		player.y < (Block1.y + Block1.h)  - 10){
-		console.log('thing');
+function wontCollideLeft(block){
+	if (player.x - 1 < (block.x + block.w) && 
+		(player.y + player.height) > block.y + 10 && 
+		(player.x + player.width) > block.x + 10 &&
+		player.y < (block.y + block.h)  - 10){
+		//console.log('thing');
 		player.vx = 0;
-		player.x = Block1.x + Block1.w;
+		player.x = block.x + block.w;
 		return false;
 	}
 	else return true;
 }
 
-function wontCollideBottom(){
-	if (player.y - 1 < (Block1.y + Block1.h) && 
-		(player.x + player.width) > Block1.x && 
-		player.x < (Block1.x + Block1.w) &&
-		(player.y + player.height) > Block1.y +10){
+function collideBottom(nearby){
+	if (nearby){
+		for (let i = 0; i < nearby.length; i++){
+			if (!wontCollideBottom(nearby[i])) return false;
+		}
+	}
+	return true;
+}
+
+function wontCollideBottom(block){
+	if (player.y - 1 < (block.y + block.h) && 
+		(player.x + player.width) > block.x && 
+		player.x < (block.x + block.w) &&
+		(player.y + player.height) > block.y + 20){
 		//console.log('ok');
 		player.vy = 0;
-		player.y = Block1.y + Block1.h;
+		player.y = block.y + block.h;
 		return false;
 	}
 	else return true;
 }
-function mover(){
 
-	if (keys["ArrowRight"] && wontCollideRight()) {
+function jumper(nearby){
+	//console.log(neary);
+	for (let ner of nearby){
+		console.log((player.y + player.height) > (ner.y - 5));
+		if (keys[" "] && (player.y + player.height) > (ner.y - 5) && canJump && jreleased) {
+			player.vy -= jumpPower;
+			canJump = false;
+			jreleased = false;
+			console.log('what');
+		}
+	}
+	
+}
+
+function mover(nearby){
+
+	
+	//console.log(nearby);
+	//console.log(collideRight(nearby));
+	if (keys["ArrowRight"] && collideRight(nearby)) {
+		//console.log('madeit');
 		player.vx += speed;
 		//console.log('ok');
 	}
-	else if (keys["ArrowLeft"] && wontCollideLeft()) {
+	else if (keys["ArrowLeft"] && collideLeft(nearby)) {
 		player.vx -= speed;
 		//console.log('other');
 	}
 	else {
-		if (player.vx > .1) player.vx *= .9;
+		if (player.vx > .1 || player.vx < -.1) player.vx *= .99;
 		else (player.vx = 0);
 	}
 
-	if (keys[" "] && (player.y >= floorY || player.y >= Block1.y) && canJump && jreleased) {
-		player.vy -= jumpPower;
-		canJump = false;
-		jreleased = false;
-		console.log('what');
-	}
+	gliding = (keys["ArrowDown"]) && (keys["ArrowLeft"] || keys["ArrowRight"]) &&player.y < floorY && (player.vx > 2 || player.vx < -2);
 
-	gliding = (keys["ArrowDown"]) && player.y < floorY && (player.vx > 2 || player.vx < -2);
-	wontCollideBottom();
-
-	gravityFunc();
-	
 	if (gliding){
 		if (player.vx > 2 || player.vx < -2){
 			t += 0.03;
         	player.y = startY + Math.sin(t * .7) * 200 - t * 18;
 		}
 	}
+
 	else if(!gliding) t = 0;
 	
+
 	
+	collideBottom(nearby);
+
+	gravityFunc(nearby);
+
+	jumper(nearby);
+	
+	
+	
+	
+}
+
+function drawBlocks(blocks){
+	for (let block of blocks){
+
+		if (block == Block3){
+			ctx.fillStyle = "green";
+		}
+		else ctx.fillStyle = "black";
+
+		ctx.fillRect(block.x - cameraX, block.y, block.w, block.h);
+	}
 }
 
 
 function draw() {
 	ctx.clearRect(0,0, canvas.width, canvas.height);
+
+	if (paused) document.getElementById("startBtn").style.display = "inline";;
 	
 
 	ctx.fillStyle = "black";
 
-	ctx.fillRect(Block1.x - cameraX, Block1.y, Block1.w, Block1.h);
+	drawBlocks(blocks)
+
+	// ctx.fillRect(Block1.x - cameraX, Block1.y, Block1.w, Block1.h);
 
 
-	ctx.fillStyle = "yellow";
-	ctx.fillRect(Block1.x - cameraX, Block1.y, 10, 10);
+	// ctx.fillStyle = "yellow";
+	// ctx.fillRect(Block1.x - cameraX, Block1.y, 10, 10);
+
+	// ctx.fillStyle = "brown";
+	// ctx.fillRect(Block2.x - cameraX, Block2.y, Block2.w, Block2.h);
 
 	ctx.fillStyle = "blue";
 	ctx.fillRect(1500- cameraX,400,100,100);
@@ -268,8 +449,8 @@ function draw() {
 	ctx.fillStyle = color;
 	ctx.fillRect(player.x - cameraX, player.y, player.width, player.height);
 
-	ctx.fillStyle = "green";
-	ctx.fillRect(0 - cameraX, floorY + player.height, WORLD_WIDTH,40);
+	// ctx.fillStyle = "green";
+	// ctx.fillRect(0 - cameraX, floorY - 100, 1000, 40);
 
 }
 
@@ -281,3 +462,4 @@ function gameLoop() {
 }
 
 requestAnimationFrame(gameLoop);
+addBlocks();
