@@ -6,7 +6,7 @@ let y = 300;
 let vy = 0;
 let vx = 0;
 let gliding;
-let floorY = canvas.height - 60
+let floorY = canvas.height - 60;
 let glideTime = 0;
 
 let startY = 600;
@@ -45,58 +45,11 @@ function Block(x,y,w,h){
 	this.h = h;
 }
 //                        x   y   w   h
-const Block1 = new Block(500,900,300,100);
+const Block1 = new Block(500,700,300,200);
 
 let blocks = [];
 
 blocks.push(Block1);
-
-let bottomPlayer;
-let topPlayer;
-let rightPlayer;
-let leftPlayer;
-
-// alert(leftPlayer);
-// alert(Block1.rB());
-
-function collision(){
-	for (let i = 0; i < blocks.length; i++){
-
-		if ((leftPlayer < (blocks[i].x + blocks[i].w) && rightPlayer > blocks[i].x) && (bottomPlayer > blocks[i].y && topPlayer < (blocks[i].y + blocks[i].h))){
-			player.vx = 0;
-			player.vy = 0;
-			speed = 0;
-		
-			// handleCollision(i);
-			//alert('nuts');
-			
-			if (bottomPlayer >= blocks[i].y){
-				
-				player.y = blocks[i].y - 20;
-				//alert('yes');
-
-				
-			}
-			//collide = true;
-		}
-		//else{collide = false;}
-		//alert('fart');
-	}
-	
-}
-
-function handleCollision(i){
-	if (keys["ArrowRight"]){
-		player.x -= speed+1;
-	}
-	if (keys["ArrowLeft"]){
-		player.x += speed+1; 
-	}
-	if (bottomPlayer > blocks[i].y -10 && topPlayer < (blocks[i].y + blocks[i].h)){
-		player.y = blocks[i].y-10;
-	}
-
-}
 
 
 let cameraX = 0;
@@ -114,10 +67,10 @@ let color = "red";
 
 const keys = {};
 
-document.addEventListener("keydown", (e) => keys[e.key] = true);
-document.addEventListener("keyup", (e) => keys[e.key] = false);
-
 document.addEventListener("keyup", e => {
+	keys[e.key] = false
+	
+	
 	if (e.code === "ArrowRight" || e.code === "ArrowLeft"){
 		holding = false;
 		speedGain();
@@ -125,6 +78,7 @@ document.addEventListener("keyup", e => {
 });
 
 document.addEventListener("keydown", e => {
+	keys[e.key] = true
 	if (e.code === "ArrowDown" && !gliding) {
         gliding = true;
         t = 0;     
@@ -135,18 +89,39 @@ document.addEventListener("keydown", e => {
 	if (e.code === "ArrowRight" || e.code === "ArrowLeft") {
         holding = true;
 		speedGain();
-        
     }
 });
 
 function update() {
-	console.log('wegood');
+	console.log(player.vy);
+	//console.log('wegood');
 	bottomPlayer = player.y + player.height;
 	topPlayer = player.y;
 	rightPlayer = player.x + player.width;
 	leftPlayer = player.x;
+	
 	mover();
-	collision();
+	//collision();
+
+	//console.log(player.vx + '- vx');
+	//console.log(player.x);
+
+	player.x += player.vx;
+	player.y += player.vy;
+
+	player.vy *= .9;
+	player.vx *= .9;
+
+	if (player.y >= floorY && !collide){
+		player.y = floorY;
+		canJump = true;
+		player.vy = 0;
+	}
+	player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH - player.width));
+
+	cameraX = player.x - canvas.width / 2;
+    cameraX = Math.max(0, Math.min(cameraX, WORLD_WIDTH - canvas.width));
+	
 }
 
 function speedGain(){
@@ -157,52 +132,105 @@ function speedGain(){
 }
 
 function gravityFunc(){
-	if (!collide){
+	if (wontCollideTop()){
 		player.vy += gravity;
 	}
-
+		
 }
 
+function wontCollideTop(){
+	if ((player.y + player.height) + 1 > Block1.y && 
+		(player.x + player.width) > Block1.x && 
+		player.x < (Block1.x + Block1.w) &&
+		player.y < (Block1.y + Block1.h) - 10) {
+		canJump = true;
+		player.vy = 0;
+		player.y = Block1.y - player.height;
+		return false;
+	}
+	else return true;
+}
+
+
+function wontCollideRight(){
+	if ((player.x + player.width) + 1 > Block1.x && 
+		(player.y + player.height) > Block1.y + 10 && 
+		player.x < (Block1.x + Block1.w - 10) &&
+		player.y < (Block1.y + Block1.h) - 10) {
+
+		//console.log((player.y + player.height) +  '- player');
+		//console.log((Block1.h +2) +  '- block');
+		//console.log((player.y + player.height) + " - bPlayer");
+		//console.log(Block1.y + " - BlockTop");
+		//alert('yes');
+		player.vx = 0;
+		player.x = Block1.x - player.width;
+		return false;
+	}
+		
+	else return true;
+}
+
+function wontCollideLeft(){
+	if (player.x - 1 < (Block1.x + Block1.w) && 
+		(player.y + player.height) > Block1.y + 10 && 
+		(player.x + player.width) > Block1.x + 10 &&
+		player.y < (Block1.y + Block1.h)  - 10){
+		console.log('thing');
+		player.vx = 0;
+		player.x = Block1.x + Block1.w;
+		return false;
+	}
+	else return true;
+}
+
+function wontCollideBottom(){
+	if (player.y - 1 < (Block1.y + Block1.h) && 
+		(player.x + player.width) > Block1.x && 
+		player.x < (Block1.x + Block1.w) &&
+		(player.y + player.height) > Block1.y +10){
+		//console.log('ok');
+		player.vy = 0;
+		player.y = Block1.y + Block1.h;
+		return false;
+	}
+	else return true;
+}
 function mover(){
 
-	if (keys["ArrowRight"]) {
+	if (keys["ArrowRight"] && wontCollideRight()) {
 		player.vx += speed;
+		//console.log('ok');
 	}
-	else if (keys["ArrowLeft"]) player.vx -= speed;
-	else player.vx *= .9;
+	else if (keys["ArrowLeft"] && wontCollideLeft()) {
+		player.vx -= speed;
+		//console.log('other');
+	}
+	else {
+		if (player.vx > .1) player.vx *= .9;
+		else (player.vx = 0);
+	}
 
-	if (keys[" "] && player.y >= floorY){
+	if (keys[" "] && (player.y >= floorY || player.y >= Block1.y) && canJump) {
 		player.vy -= jumpPower;
+		canJump = false;
+		console.log('what');
 	}
 
-	gliding = (keys["ArrowDown"]) && player.y < floorY;
+	gliding = (keys["ArrowDown"]) && player.y < floorY && (player.vx > 2 || player.vx < -2);
+	wontCollideBottom();
 
 	gravityFunc();
-
+	
 	if (gliding){
 		if (player.vx > 2 || player.vx < -2){
 			t += 0.03;
         	player.y = startY + Math.sin(t * .7) * 200 - t * 18;
 		}
 	}
-	else if(!gliding){
-		t = 0;
-	}
+	else if(!gliding) t = 0;
 	
-	player.x += player.vx;
-	player.y += player.vy;
-
-	player.vy *= .9;
-	player.vx *= .9;
-
-	if (player.y >= floorY && !collide){
-		player.y = floorY;
-		player.vy = 0;
-	}
-	player.x = Math.max(0, Math.min(player.x, WORLD_WIDTH - player.width));
-
-	cameraX = player.x - canvas.width / 2;
-    cameraX = Math.max(0, Math.min(cameraX, WORLD_WIDTH - canvas.width));
+	
 }
 
 
