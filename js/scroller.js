@@ -16,6 +16,7 @@ let floorY = canvas.height - 60;
 let glideTime = 0;
 
 let startY = 100;
+let deaths = 0;
 
 
 const maxGlideTime = 120;
@@ -38,6 +39,8 @@ const cellSize = 1000;
 
 let collide = false;
 
+let collided = false;
+
 const spawnX = 200;
 const spawnY = 200;
 
@@ -59,26 +62,33 @@ function Block(x,y,w,h){
 	this.h = h;
 }
 //                        x   y   w   h
-const Block1 = new Block(0,700,600,200);
+const Block1 = new Block(0,600,600,200);
 
-const Block2 = new Block(1200, 700, 300, 200);
-const Block3 = new Block(1500, 800, 1000, 500)
-const Block4 = new Block()
+const Block2 = new Block(1800, 900, 300, 100);
+//const Block3 = new Block(1500, 800, 1000, 500)
+const Block4 = new Block(1200, 100, 100, 600);
+const Block5 = new Block(2400, 700, 300, 100);
+const Block6 = new Block(1800, 500, 300, 100);
+const Block7 = new Block(3400, 300, 300, 100);
+
 
 
 let blocks = [];
 
 blocks.push(Block1);
 blocks.push(Block2);
-blocks.push(Block3);
+//blocks.push(Block3);
+blocks.push(Block4);
+blocks.push(Block5);
+blocks.push(Block6);
+blocks.push(Block7);
+
+
 
 
 document.getElementById("startBtn").addEventListener("click", () => {
     restart();
 });
-
-
-//console.log(blocks);
 
 
 function nearbyCollision(nearby){
@@ -117,6 +127,8 @@ function restart(){
 	document.getElementById("startBtn").style.display = "none";
 	player.x = spawnX;
 	player.y = spawnY;
+	deaths++;
+	document.getElementById("deaths").textContent = "Deaths - " + deaths; 
 }
 
 function checkNeigh(player){
@@ -174,10 +186,7 @@ document.addEventListener("keyup", e => {
 document.addEventListener("keydown", e => {
 	keys[e.key] = true
 	if (e.code === "KeyR"){
-		paused = false;
-		document.getElementById("startBtn").style.display = "none";
-		player.x = spawnX;
-		player.y = spawnY;
+		restart();
 	}
 	if (e.code === "ArrowDown" && !gliding) {
         gliding = true;
@@ -313,7 +322,7 @@ function wontCollideRight(block){
 	if ((player.x + player.width) + 1 > block.x && 
 		(player.y + player.height) > block.y + 10 && 
 		player.x < (block.x + block.w - 10) &&
-		player.y < (block.y + block.h) - 10) {
+		player.y < (block.y + block.h) - 20) {
 
 		player.vx = 0;
 		player.x = block.x - player.width;
@@ -330,7 +339,7 @@ function wontCollideLeft(block){
 	if (player.x - 1 < (block.x + block.w) && 
 		(player.y + player.height) > block.y + 10 && 
 		(player.x + player.width) > block.x + 10 &&
-		player.y < (block.y + block.h)  - 10){
+		player.y < (block.y + block.h)  - 20){
 		//console.log('thing');
 		player.vx = 0;
 		player.x = block.x + block.w;
@@ -349,7 +358,7 @@ function collideBottom(nearby){
 }
 
 function wontCollideBottom(block){
-	if (player.y - 1 < (block.y + block.h) && 
+	if (player.y - 1< (block.y + block.h) && 
 		(player.x + player.width) > block.x && 
 		player.x < (block.x + block.w) &&
 		(player.y + player.height) > block.y + 20){
@@ -374,9 +383,18 @@ function jumper(nearby){
 	}
 	
 }
+let thing;
+
+function colliding(nearby){
+	if (!collideRight(nearby) || !collideLeft(nearby)){
+		collided = true;
+	}
+}
+
 
 function mover(nearby){
 
+	colliding(nearby);
 	
 	//console.log(nearby);
 	//console.log(collideRight(nearby));
@@ -395,16 +413,23 @@ function mover(nearby){
 	}
 
 	gliding = (keys["ArrowDown"]) && (keys["ArrowLeft"] || keys["ArrowRight"]) && player.y < floorY && (player.vx > 2 || player.vx < -2);
-
-	if (gliding){
+	
+	//console.log(colliding(nearby));
+	console.log(gliding);
+	console.log(player.vx);
+	if (gliding && !collided){
 		if (player.vx > 2 || player.vx < -2){
+			//console.log(t);
 			t += 0.03;
         	player.y = startY + Math.sin(t * .7) * 200 - t * (-20);
-			console.log(t);
-		}
+			//console.log(t);
+		} else t = 1;
 	}
 
-	else if(!gliding && player.vy == 0) t = 0;
+	else if(!gliding && player.vy == 0) {
+		t = 0;
+		collided = false;
+	}
 	
 
 	
@@ -422,7 +447,7 @@ function mover(nearby){
 function drawBlocks(blocks){
 	for (let block of blocks){
 
-		if (block == Block3){
+		if (block  == Block7){
 			ctx.fillStyle = "green";
 		}
 		else ctx.fillStyle = "black";
@@ -442,37 +467,9 @@ function draw() {
 
 	drawBlocks(blocks)
 
-	// ctx.fillRect(Block1.x - cameraX, Block1.y, Block1.w, Block1.h);
-
-
-	// ctx.fillStyle = "yellow";
-	// ctx.fillRect(Block1.x - cameraX, Block1.y, 10, 10);
-
-	// ctx.fillStyle = "brown";
-	// ctx.fillRect(Block2.x - cameraX, Block2.y, Block2.w, Block2.h);
-
-	ctx.fillStyle = "blue";
-	ctx.fillRect(1500- cameraX,400,100,100);
-	ctx.fillRect(2000- cameraX,600,100,100);
-	ctx.fillRect(2500- cameraX,200,100,100);
-	ctx.fillRect(3000- cameraX,100,100,100);
-	ctx.fillRect(1500- cameraX,300,100,100);
-	ctx.fillRect(1500- cameraX,400,100,100);
-
-	ctx.fillRect(4000- cameraX,300,200,200);
-	ctx.fillRect(4250- cameraX,200,200,100);
-	ctx.fillRect(4500- cameraX,400,100,100);
-	ctx.fillRect(5000- cameraX,600,100,100);
-	ctx.fillRect(6000- cameraX,200,100,100);
-	ctx.fillRect(5500- cameraX,100,100,100);
-	ctx.fillRect(3500- cameraX,300,100,100);
-	ctx.fillRect(3000- cameraX,400,100,100);
 
 	ctx.fillStyle = color;
 	ctx.fillRect(player.x - cameraX, player.y, player.width, player.height);
-
-	// ctx.fillStyle = "green";
-	// ctx.fillRect(0 - cameraX, floorY - 100, 1000, 40);
 
 }
 
