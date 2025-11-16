@@ -60,6 +60,7 @@ ctx.fillRect(
 	player.width,
 	player.height
 );
+let jreleased = true;
 
 let canJump = true;
 
@@ -69,7 +70,7 @@ const keys = {};
 
 document.addEventListener("keyup", e => {
 	keys[e.key] = false
-	
+	jreleased = true;
 	
 	if (e.code === "ArrowRight" || e.code === "ArrowLeft"){
 		holding = false;
@@ -211,9 +212,10 @@ function mover(){
 		else (player.vx = 0);
 	}
 
-	if (keys[" "] && (player.y >= floorY || player.y >= Block1.y) && canJump) {
+	if (keys[" "] && (player.y >= floorY || player.y >= Block1.y) && canJump && jreleased) {
 		player.vy -= jumpPower;
 		canJump = false;
+		jreleased = false;
 		console.log('what');
 	}
 
