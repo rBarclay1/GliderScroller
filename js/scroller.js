@@ -70,6 +70,7 @@ const Block4 = new Block(1200, 100, 100, 600);
 const Block5 = new Block(2400, 700, 300, 100);
 const Block6 = new Block(1800, 500, 300, 100);
 const Block7 = new Block(3400, 300, 300, 100);
+const Block8 = new Block(0, WORLD_HEIGHT - 10, WORLD_WIDTH, 100 );
 
 
 
@@ -82,6 +83,7 @@ blocks.push(Block4);
 blocks.push(Block5);
 blocks.push(Block6);
 blocks.push(Block7);
+blocks.push(Block8);
 
 
 
@@ -204,16 +206,12 @@ document.addEventListener("keydown", e => {
 function update() {
 
 	if (paused) return;
-	//console.log(player.vy);
-	//console.log('wegood');
 	bottomPlayer = player.y + player.height;
 	topPlayer = player.y;
 	rightPlayer = player.x + player.width;
 	leftPlayer = player.x;
 
 	let nearby = checkNeigh(player);
-	//console.log(nearby);
-	//nearbyCollision();
 	mover(nearby);
 
 	player.x += player.vx;
@@ -226,7 +224,6 @@ function update() {
 		player.y = floorY;
 		canJump = true;
 		player.vy = 0;
-		//console.log('why');
 		paused = true;
 	}
 
@@ -245,9 +242,7 @@ function speedGain(){
 }
 
 function gravityFunc(nearby){
-	//console.log(collideTop(nearby));
 	if (collideTop(nearby)){
-		//console.log('ok');
 		player.vy += gravity;
 	}
 		
@@ -261,13 +256,9 @@ function offMap(){
 }
 
 function collideTop(nearby){
-	//console.log(nearby);
-	//console.log('yert');
 	if (nearby){
-		//console.log('yert');
 		for (let i = 0; i < nearby.length; i++){
 			if (!wontCollideTop(nearby[i])) {
-				//console.log('yert');
 				return false;
 			}
 		}
@@ -276,7 +267,6 @@ function collideTop(nearby){
 }
 
 function wontCollideTop(block){
-	//console.log(block);
 	if ((player.y + player.height) + 5 > block.y && 
 		(player.x + player.width) > block.x && 
 		player.x < (block.x + block.w) &&
@@ -284,21 +274,17 @@ function wontCollideTop(block){
 		canJump = true;
 		player.vy = 0;
 		player.y = block.y - player.height;
-		//console.log('ok');
 		return false;
 	}
 	else return true;
 }
 
 function collideRight(nearby){
-	//console.log('running');
 	if (nearby){
 		for (let i = 0; i < nearby.length; i++){
 			if (!wontCollideRight(nearby[i])) {
-				//console.log('even here');
 				return false;
 			}
-			//console.log('ok');
 		}
 		return true;
 	}
@@ -449,6 +435,9 @@ function drawBlocks(blocks){
 
 		if (block  == Block7){
 			ctx.fillStyle = "green";
+		}
+		else if (block == Block8){
+			ctx.fillStyle = "red";
 		}
 		else ctx.fillStyle = "black";
 
